@@ -10,7 +10,7 @@ main(_) ->
 
 tokenize(Data) ->
     tokenize(Data, []).
-tokenize([_], Commands) ->
+tokenize([], Commands) ->
     lists:reverse(Commands);
 tokenize([$+ | Rest], Commands) ->
     tokenize(Rest, [value_increment | Commands]);
@@ -31,7 +31,7 @@ tokenize([_ | Rest], Commands) ->
 
 transform(Data) ->
     transform(Data, 0, [], []).
-transform([_], _, Result, _) ->
+transform([], _, Result, _) ->
     lists:reverse(Result);
 transform([loop_start | Rest], Index, Result, Loops) ->
     transform(Rest, Index + 1, [{loop_start, -1} | Result], [Index | Loops]);
