@@ -1,49 +1,46 @@
 -module(bf).
--export([parse/1, transform/1, execute/1]).
+-export([tokenize/1, transform/1, execute/1]).
 
 main(_) ->
-    Prased = parse(io:get_line("")),
-    Commands = transform(Prased),
+    Token = tokenize(io:get_line("")),
+    Commands = transform(Token),
     Result = execute(Commands),
 
     io:format("~ncommands: ~p~nresult: ~p~n", [Commands, Result]).
 
-parse(Data) ->
-    parse(Data, []).
-parse([_], Commands) ->
+tokenize(Data) ->
+    tokenize(Data, []).
+tokenize([_], Commands) ->
     lists:reverse(Commands);
-parse([$+ | Rest], Commands) ->
-    parse(Rest, [value_increment | Commands]);
-parse([$- | Rest], Commands) ->
-    parse(Rest, [value_decrement | Commands]);
-parse([$. | Rest], Commands) ->
-    parse(Rest, [output | Commands]);
-parse([$< | Rest], Commands) ->
-    parse(Rest, [pointer_decrement | Commands]);
-parse([$> | Rest], Commands) ->
-    parse(Rest, [pointer_increment | Commands]);
-parse([$[ | Rest], Commands) ->
-    parse(Rest, [loop_start | Commands]);
-parse([$] | Rest], Commands) ->
-    parse(Rest, [loop_end | Commands]);
-parse([_ | Rest], Commands) ->
-    parse(Rest, Commands).
+tokenize([$+ | Rest], Commands) ->
+    tokenize(Rest, [value_increment | Commands]);
+tokenize([$- | Rest], Commands) ->
+    tokenize(Rest, [value_decrement | Commands]);
+tokenize([$. | Rest], Commands) ->
+    tokenize(Rest, [output | Commands]);
+tokenize([$< | Rest], Commands) ->
+    tokenize(Rest, [pointer_decrement | Commands]);
+tokenize([$> | Rest], Commands) ->
+    tokenize(Rest, [pointer_increment | Commands]);
+tokenize([$[ | Rest], Commands) ->
+    tokenize(Rest, [loop_start | Commands]);
+tokenize([$] | Rest], Commands) ->
+    tokenize(Rest, [loop_end | Commands]);
+tokenize([_ | Rest], Commands) ->
+    tokenize(Rest, Commands).
 
 transform(Data) ->
     transform(Data, 0, [], []).
 transform([_], _, Result, _) ->
     lists:reverse(Result);
+transform([loop_start | Rest], Index, Result, Loops) ->
+    transform(Rest, Index + 1, [{loop_start, -1} | Result], [Index | Loops]);
+transform([loop_end | Rest], Index, Result, Loops) ->
+    [StartIndex | LoopsRest] = Loops,
+    NewResult = update_list(Result, abs(length(Result) - StartIndex - 1), {loop_start, Index}),
+    transform(Rest, Index + 1, [{loop_end, StartIndex} | NewResult], LoopsRest);
 transform([Head | Rest], Index, Result, Loops) ->
-    case Head of
-        loop_start ->
-            transform(Rest, Index + 1, [{loop_start, -1} | Result], [Index | Loops]);
-        loop_end ->
-            [StartIndex | LoopsRest] = Loops,
-            NewResult = update_list(Result, abs(length(Result) - StartIndex - 1), {loop_start, Index}),
-            transform(Rest, Index + 1, [{loop_end, StartIndex} | NewResult], LoopsRest);
-        _ ->
-            transform(Rest, Index + 1, [Head | Result], Loops)
-    end.
+    transform(Rest, Index + 1, [Head | Result], Loops).
 
 execute(Commands) ->
     execute(Commands, Commands, 0, []).
