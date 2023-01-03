@@ -18,9 +18,9 @@ transform_test() ->
       {value_increment, 2},
       {loop_end, 0},
       {loop_start, 8},
-      pointer_decrement,
+      {pointer_decrement, 1},
       {loop_start, 7},
-      value_decrement,
+      {value_decrement, 1},
       {loop_end, 5},
       {loop_end, 3}
    ] = bf:transform([
@@ -42,11 +42,11 @@ execute_test() ->
       outputs := [2]
    } = bf:execute([
       {value_increment, 1},
-      pointer_increment,
+      {pointer_increment, 1},
       {value_increment, 1},
       {value_increment, 1},
-      pointer_decrement,
-      value_decrement,
-      pointer_increment,
+      {pointer_decrement, 1},
+      {value_decrement, 1},
+      {pointer_increment, 1},
       output
    ]).

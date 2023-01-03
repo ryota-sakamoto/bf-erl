@@ -36,6 +36,15 @@ transform([], _, Result, _) ->
 transform([value_increment | Rest], Index, Result, Loops) ->
     Remain = lists:dropwhile(fun (V) -> V == value_increment end, Rest),
     transform(Remain, Index + 1, [{value_increment, 1 + length(Rest) - length(Remain)} | Result], Loops);
+transform([value_decrement | Rest], Index, Result, Loops) ->
+    Remain = lists:dropwhile(fun (V) -> V == value_decrement end, Rest),
+    transform(Remain, Index + 1, [{value_decrement, 1 + length(Rest) - length(Remain)} | Result], Loops);
+transform([pointer_increment | Rest], Index, Result, Loops) ->
+    Remain = lists:dropwhile(fun (V) -> V == pointer_increment end, Rest),
+    transform(Remain, Index + 1, [{pointer_increment, 1 + length(Rest) - length(Remain)} | Result], Loops);
+transform([pointer_decrement | Rest], Index, Result, Loops) ->
+    Remain = lists:dropwhile(fun (V) -> V == pointer_decrement end, Rest),
+    transform(Remain, Index + 1, [{pointer_decrement, 1 + length(Rest) - length(Remain)} | Result], Loops);
 transform([loop_start | Rest], Index, Result, Loops) ->
     transform(Rest, Index + 1, [{loop_start, -1} | Result], [Index | Loops]);
 transform([loop_end | Rest], Index, Result, Loops) ->
@@ -64,12 +73,12 @@ execute(Commands, [Head | Rest], PointerIndex, Data, Outputs) ->
     case Head of
         {value_increment, Count} ->
             execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value + Count), Outputs);
-        value_decrement ->
-            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value - 1), Outputs);
+        {value_decrement, Count} ->
+            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value - Count), Outputs);
         output ->
             execute(Commands, Rest, PointerIndex, NewData, [Value | Outputs]);
-        pointer_increment -> execute(Commands, Rest, PointerIndex + 1, NewData, Outputs);
-        pointer_decrement -> execute(Commands, Rest, PointerIndex - 1, NewData, Outputs);
+        {pointer_increment, Count} -> execute(Commands, Rest, PointerIndex + Count, NewData, Outputs);
+        {pointer_decrement, Count} -> execute(Commands, Rest, PointerIndex - Count, NewData, Outputs);
         {loop_start, LoopEndIndex} when Value == 0 ->
             execute(Commands, lists:sublist(Commands, LoopEndIndex + 1, length(Commands)), PointerIndex, NewData, Outputs);
         {loop_start, _} ->
