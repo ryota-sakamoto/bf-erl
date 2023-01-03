@@ -34,3 +34,18 @@ transform_test() ->
       loop_end,
       loop_end
    ]).
+
+execute_test() ->
+   #{
+      data := [0, 2],
+      outputs := [2]
+   } = bf:execute([
+      value_increment,
+      pointer_increment,
+      value_increment,
+      value_increment,
+      pointer_decrement,
+      value_decrement,
+      pointer_increment,
+      output
+   ]).

@@ -6,7 +6,7 @@ main(_) ->
     Commands = transform(Token),
     Result = execute(Commands),
 
-    io:format("~ncommands: ~p~nresult: ~p~n", [Commands, Result]).
+    io:format("commands: ~p~nresult: ~p~n", [Commands, Result]).
 
 tokenize(Data) ->
     tokenize(Data, []).
@@ -43,10 +43,13 @@ transform([Head | Rest], Index, Result, Loops) ->
     transform(Rest, Index + 1, [Head | Result], Loops).
 
 execute(Commands) ->
-    execute(Commands, Commands, 0, []).
-execute(_, [], _, Result) ->
-    Result;
-execute(Commands, [Head | Rest], PointerIndex, Data) ->
+    execute(Commands, Commands, 0, [], []).
+execute(_, [], _, Data, Outputs) ->
+    #{
+        data => Data,
+        outputs => lists:reverse(Outputs)
+    };
+execute(Commands, [Head | Rest], PointerIndex, Data, Outputs) ->
     NewData = if
         length(Data) =< PointerIndex ->
             Data ++ [0];
@@ -57,23 +60,22 @@ execute(Commands, [Head | Rest], PointerIndex, Data) ->
 
     case Head of
         value_increment ->
-            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value + 1));
+            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value + 1), Outputs);
         value_decrement ->
-            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value - 1));
+            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value - 1), Outputs);
         output ->
-            io:format("~c", [Value]),
-            execute(Commands, Rest, PointerIndex, NewData);
-        pointer_increment -> execute(Commands, Rest, PointerIndex + 1, NewData);
-        pointer_decrement -> execute(Commands, Rest, PointerIndex - 1, NewData);
+            execute(Commands, Rest, PointerIndex, NewData, [Value | Outputs]);
+        pointer_increment -> execute(Commands, Rest, PointerIndex + 1, NewData, Outputs);
+        pointer_decrement -> execute(Commands, Rest, PointerIndex - 1, NewData, Outputs);
         {loop_start, LoopEndIndex} when Value == 0 ->
-            execute(Commands, lists:sublist(Commands, LoopEndIndex + 1, length(Commands)), PointerIndex, NewData);
+            execute(Commands, lists:sublist(Commands, LoopEndIndex + 1, length(Commands)), PointerIndex, NewData, Outputs);
         {loop_start, _} ->
-            execute(Commands, Rest, PointerIndex, NewData);
+            execute(Commands, Rest, PointerIndex, NewData, Outputs);
         {loop_end, LoopStartIndex} when Value /= 0 ->
-            execute(Commands, lists:sublist(Commands, LoopStartIndex + 1, length(Commands)), PointerIndex, NewData);
+            execute(Commands, lists:sublist(Commands, LoopStartIndex + 1, length(Commands)), PointerIndex, NewData, Outputs);
         {loop_end, _} ->
-            execute(Commands, Rest, PointerIndex, NewData);
-        _ -> execute(Commands, Rest, PointerIndex, NewData)
+            execute(Commands, Rest, PointerIndex, NewData, Outputs);
+        _ -> execute(Commands, Rest, PointerIndex, NewData, Outputs)
     end.
 
 update_list(List, Index, Value) ->
