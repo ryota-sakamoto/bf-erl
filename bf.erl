@@ -34,7 +34,8 @@ transform(Data) ->
 transform([], _, Result, _) ->
     lists:reverse(Result);
 transform([value_increment | Rest], Index, Result, Loops) ->
-    transform(Rest, Index + 1, [{value_increment, 1} | Result], Loops);
+    Remain = lists:dropwhile(fun (V) -> V == value_increment end, Rest),
+    transform(Remain, Index + 1, [{value_increment, 1 + length(Rest) - length(Remain)} | Result], Loops);
 transform([loop_start | Rest], Index, Result, Loops) ->
     transform(Rest, Index + 1, [{loop_start, -1} | Result], [Index | Loops]);
 transform([loop_end | Rest], Index, Result, Loops) ->
