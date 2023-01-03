@@ -33,6 +33,8 @@ transform(Data) ->
     transform(Data, 0, [], []).
 transform([], _, Result, _) ->
     lists:reverse(Result);
+transform([value_increment | Rest], Index, Result, Loops) ->
+    transform(Rest, Index + 1, [{value_increment, 1} | Result], Loops);
 transform([loop_start | Rest], Index, Result, Loops) ->
     transform(Rest, Index + 1, [{loop_start, -1} | Result], [Index | Loops]);
 transform([loop_end | Rest], Index, Result, Loops) ->
@@ -59,8 +61,8 @@ execute(Commands, [Head | Rest], PointerIndex, Data, Outputs) ->
     Value = lists:nth(PointerIndex + 1, NewData),
 
     case Head of
-        value_increment ->
-            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value + 1), Outputs);
+        {value_increment, Count} ->
+            execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value + Count), Outputs);
         value_decrement ->
             execute(Commands, Rest, PointerIndex, update_list(NewData, PointerIndex, Value - 1), Outputs);
         output ->

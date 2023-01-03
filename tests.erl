@@ -15,7 +15,7 @@ tokenize_test() ->
 transform_test() ->
    [
       {loop_start, 2},
-      value_increment,
+      {value_increment, 1},
       {loop_end, 0},
       {loop_start, 8},
       pointer_decrement,
@@ -40,10 +40,10 @@ execute_test() ->
       data := [0, 2],
       outputs := [2]
    } = bf:execute([
-      value_increment,
+      {value_increment, 1},
       pointer_increment,
-      value_increment,
-      value_increment,
+      {value_increment, 1},
+      {value_increment, 1},
       pointer_decrement,
       value_decrement,
       pointer_increment,
